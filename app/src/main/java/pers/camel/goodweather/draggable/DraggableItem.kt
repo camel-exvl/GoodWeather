@@ -1,87 +1,81 @@
-package pers.camel.goodweather
+package pers.camel.goodweather.draggable
 
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.AnchoredDraggableState
 import androidx.compose.foundation.gestures.DraggableAnchors
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.anchoredDraggable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import pers.camel.goodweather.draggable.DeleteAction
-import pers.camel.goodweather.draggable.DragAnchors
-import pers.camel.goodweather.draggable.DraggableItem
-import pers.camel.goodweather.ui.theme.GoodWeatherTheme
 import kotlin.math.roundToInt
 
-@Composable
-fun CityScreen(cityViewModel: CityViewModel, onBackClick: () -> Unit) {
-    val cities by cityViewModel.cities.collectAsState()
-
-    Scaffold(topBar = { TopBar(onBackClick) }) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier.padding(innerPadding)
-        ) {
-            items(cities, key = { it.id }) { city ->
-                CityItem(city.name)
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun TopBar(onBackClick: () -> Unit) {
-    TopAppBar(
-        title = {
-            Text(
-                text = "城市列表",
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                style = MaterialTheme.typography.displaySmall
-            )
-        },
-        navigationIcon = {
-            IconButton(onClick = onBackClick) {
-                Icon(imageVector = Icons.Filled.KeyboardArrowLeft, contentDescription = "返回")
-            }
-        },
-        actions = {
-            IconButton(onClick = { /*TODO*/ }) {
-                Icon(imageVector = Icons.Filled.Add, contentDescription = "添加城市")
-            }
-        },
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-    )
+enum class DragAnchors {
+    Start,
+    Center,
+    End,
 }
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun CityItem(city: String) {
+fun DraggableItem(
+    modifier: Modifier,
+    state: AnchoredDraggableState<DragAnchors>,
+    content: @Composable BoxScope.() -> Unit,
+    startAction: @Composable (BoxScope.() -> Unit)? = {},
+    endAction: @Composable (BoxScope.() -> Unit)? = {}
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RectangleShape)
+    ) {
+        endAction?.let {
+            endAction()
+        }
+        startAction?.let {
+            startAction()
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.CenterStart)
+                .offset {
+                    IntOffset(
+                        x = -state
+                            .requireOffset()
+                            .roundToInt(),
+                        y = 0,
+                    )
+                }
+                .anchoredDraggable(state, Orientation.Horizontal, reverseDirection = true),
+            content = content
+        )
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Preview(showBackground = true)
+@Composable
+fun DraggableItemPreview() {
     val density = LocalDensity.current
     val defaultActionSize = 80.dp
     val endActionSizePx = with(density) { (defaultActionSize * 2).toPx() }
@@ -108,7 +102,7 @@ private fun CityItem(city: String) {
         content = {
             Text(
                 modifier = Modifier.padding(16.dp),
-                text = city,
+                text = "北京",
                 style = MaterialTheme.typography.bodyMedium
             )
         },
@@ -133,13 +127,4 @@ private fun CityItem(city: String) {
             }
         }
     )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun CityScreenPreview() {
-    val cityViewModel = CityViewModel()
-    GoodWeatherTheme {
-        CityScreen(cityViewModel) {}
-    }
 }
