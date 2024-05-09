@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.android)
     id("kotlin-kapt")
     alias(libs.plugins.hilt.android)
+    kotlin("plugin.serialization") version "1.9.24"
 }
 
 android {
@@ -65,6 +66,9 @@ dependencies {
     implementation(libs.androidx.foundation)
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.okhttp)
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.serialization.kotlinx.json)
+    implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.hilt.android)
     kapt(libs.hilt.compiler)

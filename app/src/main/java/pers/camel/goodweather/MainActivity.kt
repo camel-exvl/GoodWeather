@@ -56,10 +56,9 @@ class MainActivity : ComponentActivity() {
                 NavHost(
                     navController,
                     startDestination = "main",
-                    enterTransition = { EnterTransition.None },
-                    popEnterTransition = { EnterTransition.None }
                 ) {
-                    composable(route = "main") {
+                    composable(route = "main", enterTransition = { EnterTransition.None },
+                        popEnterTransition = { EnterTransition.None }) {
                         MainScreen(currentWeatherViewModel, forecastViewModel, onCityClick = {
                             navController.navigate("city")
                         })
@@ -67,6 +66,7 @@ class MainActivity : ComponentActivity() {
                     composable(
                         route = "city",
                         enterTransition = enterTransition,
+                        popEnterTransition = { EnterTransition.None },
                         popExitTransition = popExitTransition
                     ) {
                         CityScreen(cityViewModel, onBackClick = {
@@ -78,10 +78,10 @@ class MainActivity : ComponentActivity() {
                     composable(
                         route = "addCity",
                         enterTransition = enterTransition,
-                        popExitTransition = popExitTransition
+                        popExitTransition = popExitTransition,
                     ) {
                         val cityListViewModel = hiltViewModel<CityListViewModel>()
-                        AddCityScreen(cityListViewModel) {
+                        AddCityScreen(cityListViewModel, cityViewModel) {
                             navController.popBackStack()
                         }
                     }

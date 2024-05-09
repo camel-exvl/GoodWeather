@@ -33,6 +33,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import pers.camel.goodweather.data.City
 import pers.camel.goodweather.draggable.DeleteAction
 import pers.camel.goodweather.draggable.DragAnchors
 import pers.camel.goodweather.draggable.DraggableItem
@@ -44,7 +45,10 @@ import kotlin.math.roundToInt
 fun CityScreen(cityViewModel: CityViewModel, onBackClick: () -> Unit, onAddCityClick: () -> Unit) {
     val cities by cityViewModel.cities.collectAsState()
 
-    Scaffold(topBar = { TopBar(onBackClick, onAddCityClick) }) { innerPadding ->
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.surface,
+        topBar = { TopBar(onBackClick, onAddCityClick) }
+    ) { innerPadding ->
         LazyColumn(
             modifier = Modifier.padding(innerPadding)
         ) {
@@ -62,7 +66,7 @@ private fun TopBar(onBackClick: () -> Unit, onAddCityClick: () -> Unit) {
         title = {
             Text(
                 text = "城市列表",
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                color = MaterialTheme.colorScheme.onSurface,
                 style = MaterialTheme.typography.displaySmall
             )
         },
@@ -79,7 +83,7 @@ private fun TopBar(onBackClick: () -> Unit, onAddCityClick: () -> Unit) {
                 Icon(imageVector = Icons.Filled.Add, contentDescription = "添加城市")
             }
         },
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
     )
 }
 
@@ -143,6 +147,14 @@ private fun CityItem(city: String) {
 @Composable
 fun CityScreenPreview() {
     val cityViewModel = CityViewModel()
+    cityViewModel.setCities(
+        listOf(
+            City("1", "北京", "北京", "北京", "中国"),
+            City("2", "上海", "上海", "上海", "中国"),
+            City("3", "广州", "广州", "广东", "中国"),
+            City("4", "深圳", "深圳", "广东", "中国"),
+        )
+    )
     GoodWeatherTheme {
         CityScreen(cityViewModel, {}) {}
     }
