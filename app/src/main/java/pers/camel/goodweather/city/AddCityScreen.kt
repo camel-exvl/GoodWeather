@@ -46,18 +46,18 @@ import kotlinx.coroutines.launch
 import pers.camel.goodweather.api.QWeatherService
 import pers.camel.goodweather.data.City
 import pers.camel.goodweather.ui.theme.GoodWeatherTheme
-import pers.camel.goodweather.viewmodels.CityListViewModel
 import pers.camel.goodweather.viewmodels.CityViewModel
+import pers.camel.goodweather.viewmodels.SearchCityResultViewModel
 
 @Composable
 fun AddCityScreen(
-    cityListViewModel: CityListViewModel,
+    searchCityResultViewModel: SearchCityResultViewModel,
     cityViewModel: CityViewModel,
     onBackClick: () -> Unit
 ) {
-    val cities by cityListViewModel.cities.collectAsState()
-    val loading by cityListViewModel.loading.collectAsState()
-    val error by cityListViewModel.error.collectAsState()
+    val cities by searchCityResultViewModel.cities.collectAsState()
+    val loading by searchCityResultViewModel.loading.collectAsState()
+    val error by searchCityResultViewModel.error.collectAsState()
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surface,
@@ -66,9 +66,9 @@ fun AddCityScreen(
         Column(modifier = Modifier.padding(innerPadding)) {
             SearchBar(
                 modifier = Modifier
-                    .padding(top = 16.dp)
+                    .padding(top = 8.dp)
                     .fillMaxWidth(),
-                cityListViewModel = cityListViewModel
+                searchCityResultViewModel = searchCityResultViewModel
             )
             Box(modifier = Modifier.fillMaxSize()) {
                 LazyColumn(
@@ -111,7 +111,6 @@ fun AddCityScreen(
                             modifier = Modifier.padding(top = 8.dp)
                         )
                     }
-
                 }
             }
         }
@@ -142,7 +141,7 @@ private fun TopBar(onBackClick: () -> Unit) {
 }
 
 @Composable
-private fun SearchBar(modifier: Modifier, cityListViewModel: CityListViewModel) {
+private fun SearchBar(modifier: Modifier, searchCityResultViewModel: SearchCityResultViewModel) {
     var text by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
@@ -152,10 +151,10 @@ private fun SearchBar(modifier: Modifier, cityListViewModel: CityListViewModel) 
                 text = it
                 if (it.isNotEmpty()) {
                     coroutineScope.launch {
-                        cityListViewModel.searchCity(text)
+                        searchCityResultViewModel.searchCity(text)
                     }
                 } else {
-                    cityListViewModel.setCities(emptyList())
+                    searchCityResultViewModel.setCities(emptyList())
                 }
             },
             placeholder = { Text("请输入城市名") },
@@ -182,10 +181,10 @@ private fun SearchBar(modifier: Modifier, cityListViewModel: CityListViewModel) 
                 onSearch = {
                     if (text.isNotEmpty()) {
                         coroutineScope.launch {
-                            cityListViewModel.searchCity(text)
+                            searchCityResultViewModel.searchCity(text)
                         }
                     } else {
-                        cityListViewModel.setCities(emptyList())
+                        searchCityResultViewModel.setCities(emptyList())
                     }
                 }
             ),
@@ -227,8 +226,8 @@ private fun CityItem(city: City, onClick: () -> Unit) {
 @Composable
 fun AddCityScreenPreview() {
     val context = LocalContext.current
-    val cityListViewModel = CityListViewModel(QWeatherService(context))
-    cityListViewModel.setCities(
+    val searchCityResultViewModel = SearchCityResultViewModel(QWeatherService(context))
+    searchCityResultViewModel.setCities(
         listOf(
             City("1", "北京", "北京", "北京", "中国"),
             City("2", "上海", "上海", "上海", "中国"),
@@ -238,6 +237,6 @@ fun AddCityScreenPreview() {
     )
     val cityViewModel = CityViewModel()
     GoodWeatherTheme {
-        AddCityScreen(cityListViewModel = cityListViewModel, cityViewModel) {}
+        AddCityScreen(searchCityResultViewModel = searchCityResultViewModel, cityViewModel) {}
     }
 }

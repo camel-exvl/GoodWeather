@@ -9,7 +9,7 @@ import pers.camel.goodweather.data.City
 import javax.inject.Inject
 
 @HiltViewModel
-class CityListViewModel @Inject constructor(
+class SearchCityResultViewModel @Inject constructor(
     private val qWeatherService: QWeatherService
 ) : ViewModel() {
 

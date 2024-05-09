@@ -3,16 +3,22 @@ package pers.camel.goodweather.viewmodels
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import pers.camel.goodweather.data.City
 import java.time.LocalDateTime
 
 data class CurrentWeather(
     val temperature: Int,
     val description: String,
-    val updateTime: LocalDateTime
 )
 
 class CurrentWeatherViewModel : ViewModel() {
-    private val _currentWeather = MutableStateFlow(CurrentWeather(25, "晴", LocalDateTime.now()))
+    private val _currentCity = MutableStateFlow(City("101010100", "北京", "北京", "北京市", "中国"))
+    val currentCity = _currentCity.asStateFlow()
+
+    private val _updateTime = MutableStateFlow(LocalDateTime.now())
+    val updateTime = _updateTime.asStateFlow()
+
+    private val _currentWeather = MutableStateFlow(CurrentWeather(25, "晴"))
     val currentWeather = _currentWeather.asStateFlow()
 }
 

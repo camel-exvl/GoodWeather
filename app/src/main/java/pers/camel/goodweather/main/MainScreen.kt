@@ -80,7 +80,10 @@ private fun TopBar(
     viewModel: CurrentWeatherViewModel,
     onCityClick: () -> Unit = {}
 ) {
+    val city by viewModel.currentCity.collectAsState()
     val weather by viewModel.currentWeather.collectAsState()
+    val updateTime by viewModel.updateTime.collectAsState()
+
     TopAppBar(
         title = {
             Column(
@@ -93,7 +96,7 @@ private fun TopBar(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = "北京",
+                        text = city.name,
                         color = Color.White,
                         style = MaterialTheme.typography.titleSmall
                     )
@@ -110,7 +113,7 @@ private fun TopBar(
                     )
                     Text(
                         text = "${
-                            Duration.between(weather.updateTime, LocalDateTime.now()).toMinutes()
+                            Duration.between(updateTime, LocalDateTime.now()).toMinutes()
                         }分钟前",
                         color = Color.White,
                         style = MaterialTheme.typography.displaySmall

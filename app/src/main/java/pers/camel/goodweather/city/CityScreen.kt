@@ -1,45 +1,39 @@
 package pers.camel.goodweather.city
 
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.gestures.AnchoredDraggableState
-import androidx.compose.foundation.gestures.DraggableAnchors
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.minimumInteractiveComponentSize
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import pers.camel.goodweather.data.City
-import pers.camel.goodweather.draggable.DeleteAction
-import pers.camel.goodweather.draggable.DragAnchors
-import pers.camel.goodweather.draggable.DraggableItem
 import pers.camel.goodweather.ui.theme.GoodWeatherTheme
 import pers.camel.goodweather.viewmodels.CityViewModel
-import kotlin.math.roundToInt
 
 @Composable
 fun CityScreen(cityViewModel: CityViewModel, onBackClick: () -> Unit, onAddCityClick: () -> Unit) {
@@ -50,10 +44,14 @@ fun CityScreen(cityViewModel: CityViewModel, onBackClick: () -> Unit, onAddCityC
         topBar = { TopBar(onBackClick, onAddCityClick) }
     ) { innerPadding ->
         LazyColumn(
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier
+                .padding(innerPadding)
+                .padding(top = 8.dp)
         ) {
             items(cities, key = { it.id }) { city ->
-                CityItem(city.name)
+                CityItem(city.name) {
+                    cityViewModel.removeCity(city)
+                }
             }
         }
     }
@@ -87,60 +85,58 @@ private fun TopBar(onBackClick: () -> Unit, onAddCityClick: () -> Unit) {
     )
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun CityItem(city: String) {
-    val density = LocalDensity.current
-    val defaultActionSize = 80.dp
-    val endActionSizePx = with(density) { (defaultActionSize * 2).toPx() }
-//    val startActionSizePx = with(density) { defaultActionSize.toPx() }
-
-    val state = remember {
-        AnchoredDraggableState(
-            initialValue = DragAnchors.Center,
-            anchors = DraggableAnchors {
-//                DragAnchors.Start at -startActionSizePx
-                DragAnchors.Center at 0f
-                DragAnchors.End at endActionSizePx
-            },
-            positionalThreshold = { distance: Float -> distance * 0.5f },
-            velocityThreshold = { with(density) { 100.dp.toPx() } },
-            animationSpec = tween(),
-        )
-    }
-
-    DraggableItem(
+private fun CityItem(city: String, onDelete: () -> Unit) {
+    SwipeBox(
         modifier = Modifier
-            .height(70.dp),
-        state = state,
-        content = {
+            .fillMaxSize(),
+        onDelete = onDelete
+    ) {
+        ListItem(headlineContent = {
             Text(
                 modifier = Modifier.padding(16.dp),
                 text = city,
                 style = MaterialTheme.typography.bodyMedium
             )
-        },
-        endAction = {
+        })
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SwipeBox(
+    modifier: Modifier = Modifier,
+    onDelete: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    val swipeState = rememberSwipeToDismissBoxState(
+        positionalThreshold = { distance -> distance * 0.5f },
+    )
+
+    SwipeToDismissBox(
+        modifier = modifier.animateContentSize(),
+        state = swipeState,
+        enableDismissFromStartToEnd = false,
+        backgroundContent = {
             Box(
+                contentAlignment = Alignment.CenterEnd,
                 modifier = Modifier
-                    .fillMaxHeight()
-                    .align(Alignment.CenterEnd),
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.errorContainer)
             ) {
-                DeleteAction(
-                    Modifier
-                        .width(defaultActionSize)
-                        .fillMaxHeight()
-                        .offset {
-                            IntOffset(
-                                (-state
-                                    .requireOffset() + endActionSizePx)
-                                    .roundToInt(), 0
-                            )
-                        }
+                Icon(
+                    modifier = Modifier.minimumInteractiveComponentSize(),
+                    imageVector = Icons.Outlined.Delete, contentDescription = "删除"
                 )
             }
         }
-    )
+    ) {
+        content()
+    }
+
+    if (swipeState.currentValue == SwipeToDismissBoxValue.EndToStart) {
+        onDelete()
+    }
 }
 
 @Preview(showBackground = true)

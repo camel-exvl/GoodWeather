@@ -21,10 +21,10 @@ import pers.camel.goodweather.city.AddCityScreen
 import pers.camel.goodweather.city.CityScreen
 import pers.camel.goodweather.main.MainScreen
 import pers.camel.goodweather.ui.theme.GoodWeatherTheme
-import pers.camel.goodweather.viewmodels.CityListViewModel
 import pers.camel.goodweather.viewmodels.CityViewModel
 import pers.camel.goodweather.viewmodels.CurrentWeatherViewModel
 import pers.camel.goodweather.viewmodels.ForecastViewModel
+import pers.camel.goodweather.viewmodels.SearchCityResultViewModel
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -80,8 +80,8 @@ class MainActivity : ComponentActivity() {
                         enterTransition = enterTransition,
                         popExitTransition = popExitTransition,
                     ) {
-                        val cityListViewModel = hiltViewModel<CityListViewModel>()
-                        AddCityScreen(cityListViewModel, cityViewModel) {
+                        val searchCityResultViewModel = hiltViewModel<SearchCityResultViewModel>()
+                        AddCityScreen(searchCityResultViewModel, cityViewModel) {
                             navController.popBackStack()
                         }
                     }
