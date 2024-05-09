@@ -1,4 +1,4 @@
-package pers.camel.goodweather
+package pers.camel.goodweather.viewmodels
 
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow

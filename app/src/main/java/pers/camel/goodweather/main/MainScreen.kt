@@ -1,4 +1,4 @@
-package pers.camel.goodweather
+package pers.camel.goodweather.main
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -28,7 +28,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import pers.camel.goodweather.R
 import pers.camel.goodweather.ui.theme.GoodWeatherTheme
+import pers.camel.goodweather.viewmodels.CurrentWeatherViewModel
+import pers.camel.goodweather.viewmodels.ForecastViewModel
 import java.time.Duration
 import java.time.LocalDateTime
 

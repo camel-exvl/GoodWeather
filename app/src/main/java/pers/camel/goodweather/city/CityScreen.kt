@@ -1,4 +1,4 @@
-package pers.camel.goodweather
+package pers.camel.goodweather.city
 
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -13,8 +13,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -37,13 +37,14 @@ import pers.camel.goodweather.draggable.DeleteAction
 import pers.camel.goodweather.draggable.DragAnchors
 import pers.camel.goodweather.draggable.DraggableItem
 import pers.camel.goodweather.ui.theme.GoodWeatherTheme
+import pers.camel.goodweather.viewmodels.CityViewModel
 import kotlin.math.roundToInt
 
 @Composable
-fun CityScreen(cityViewModel: CityViewModel, onBackClick: () -> Unit) {
+fun CityScreen(cityViewModel: CityViewModel, onBackClick: () -> Unit, onAddCityClick: () -> Unit) {
     val cities by cityViewModel.cities.collectAsState()
 
-    Scaffold(topBar = { TopBar(onBackClick) }) { innerPadding ->
+    Scaffold(topBar = { TopBar(onBackClick, onAddCityClick) }) { innerPadding ->
         LazyColumn(
             modifier = Modifier.padding(innerPadding)
         ) {
@@ -56,7 +57,7 @@ fun CityScreen(cityViewModel: CityViewModel, onBackClick: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TopBar(onBackClick: () -> Unit) {
+private fun TopBar(onBackClick: () -> Unit, onAddCityClick: () -> Unit) {
     TopAppBar(
         title = {
             Text(
@@ -67,11 +68,14 @@ private fun TopBar(onBackClick: () -> Unit) {
         },
         navigationIcon = {
             IconButton(onClick = onBackClick) {
-                Icon(imageVector = Icons.Filled.KeyboardArrowLeft, contentDescription = "返回")
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                    contentDescription = "返回"
+                )
             }
         },
         actions = {
-            IconButton(onClick = { /*TODO*/ }) {
+            IconButton(onClick = onAddCityClick) {
                 Icon(imageVector = Icons.Filled.Add, contentDescription = "添加城市")
             }
         },
@@ -140,6 +144,6 @@ private fun CityItem(city: String) {
 fun CityScreenPreview() {
     val cityViewModel = CityViewModel()
     GoodWeatherTheme {
-        CityScreen(cityViewModel) {}
+        CityScreen(cityViewModel, {}) {}
     }
 }
