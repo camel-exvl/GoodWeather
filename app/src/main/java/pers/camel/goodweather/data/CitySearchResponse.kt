@@ -25,9 +25,3 @@ data class Location(
     val rank: String,
     val fxLink: String
 )
-
-@Serializable
-data class Refer(
-    val sources: List<String>,
-    val license: List<String>
-)

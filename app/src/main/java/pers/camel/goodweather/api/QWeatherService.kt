@@ -9,6 +9,8 @@ import io.ktor.client.request.get
 import io.ktor.serialization.kotlinx.json.json
 import pers.camel.goodweather.R
 import pers.camel.goodweather.data.CitySearchResponse
+import pers.camel.goodweather.data.CurrentWeatherResponse
+import pers.camel.goodweather.data.ForecastResponse
 
 class QWeatherService(context: Context) {
     companion object {
@@ -34,6 +36,26 @@ class QWeatherService(context: Context) {
         } catch (e: Exception) {
             Log.e(TAG, "getCity error: $e")
             return CitySearchResponse(0, null, null)
+        }
+    }
+
+    suspend fun getCurrentWeather(cityId: String): CurrentWeatherResponse {
+        try {
+            val response = client.get("$WEATHER_URL/v7/weather/now?location=$cityId&key=$key")
+            return response.body()
+        } catch (e: Exception) {
+            Log.e(TAG, "getCurrentWeather error: $e")
+            return CurrentWeatherResponse(0, null, null, null, null)
+        }
+    }
+
+    suspend fun getForecast(cityId: String): ForecastResponse {
+        try {
+            val response = client.get("$WEATHER_URL/v7/weather/7d?location=$cityId&key=$key")
+            return response.body()
+        } catch (e: Exception) {
+            Log.e(TAG, "getForecast error: $e")
+            return ForecastResponse(0, null, null, null, null)
         }
     }
 }

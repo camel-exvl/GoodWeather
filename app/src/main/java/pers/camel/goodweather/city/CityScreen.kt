@@ -110,7 +110,7 @@ private fun SwipeBox(
     content: @Composable () -> Unit
 ) {
     val swipeState = rememberSwipeToDismissBoxState(
-        positionalThreshold = { distance -> distance * 0.5f },
+        positionalThreshold = { distance -> distance * 0.75f },
     )
 
     SwipeToDismissBox(

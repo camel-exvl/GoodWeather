@@ -46,8 +46,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        val currentWeatherViewModel: CurrentWeatherViewModel by viewModels()
-        val forecastViewModel: ForecastViewModel by viewModels()
         val cityViewModel: CityViewModel by viewModels()
 
         setContent {
@@ -59,6 +57,8 @@ class MainActivity : ComponentActivity() {
                 ) {
                     composable(route = "main", enterTransition = { EnterTransition.None },
                         popEnterTransition = { EnterTransition.None }) {
+                        val currentWeatherViewModel = hiltViewModel<CurrentWeatherViewModel>()
+                        val forecastViewModel = hiltViewModel<ForecastViewModel>()
                         MainScreen(currentWeatherViewModel, forecastViewModel, onCityClick = {
                             navController.navigate("city")
                         })
