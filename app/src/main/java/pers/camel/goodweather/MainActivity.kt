@@ -17,9 +17,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
-import pers.camel.goodweather.city.AddCityScreen
-import pers.camel.goodweather.city.CityScreen
-import pers.camel.goodweather.main.MainScreen
+import pers.camel.goodweather.compose.city.AddCityScreen
+import pers.camel.goodweather.compose.city.CityScreen
+import pers.camel.goodweather.compose.main.MainScreen
 import pers.camel.goodweather.ui.theme.GoodWeatherTheme
 import pers.camel.goodweather.viewmodels.CityViewModel
 import pers.camel.goodweather.viewmodels.CurrentWeatherViewModel

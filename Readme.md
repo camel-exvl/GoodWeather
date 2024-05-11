@@ -12,3 +12,7 @@
 	<string name="qweather_key">your_key</string>
 </resources>
 ```
+
+## Reference
+
+- [Weather Pixel Icon](https://github.com/breezy-weather/pixel-icon-provider): [LGPL-3.0 License](https://github.com/breezy-weather/pixel-icon-provider/blob/main/LICENSE)

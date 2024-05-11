@@ -1,4 +1,4 @@
-package pers.camel.goodweather.city
+package pers.camel.goodweather.compose.city
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box

@@ -1,4 +1,4 @@
-package pers.camel.goodweather.city
+package pers.camel.goodweather.compose.city
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
