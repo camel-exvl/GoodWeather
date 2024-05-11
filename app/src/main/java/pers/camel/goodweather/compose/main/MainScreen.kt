@@ -1,5 +1,7 @@
 package pers.camel.goodweather.compose.main
 
+import androidx.compose.animation.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -29,8 +31,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -58,6 +62,8 @@ fun MainScreen(
     onCityClick: () -> Unit
 ) {
     val city by currentWeatherViewModel.currentCity.collectAsState()
+    val backgroundColor by currentWeatherViewModel.backgroundColor.collectAsState()
+    val animatedBackgroundColor = remember { Animatable(backgroundColor) }
     val updateDurationValue by currentWeatherViewModel.updateDuration.collectAsState()
     val pullToRefreshState = rememberPullToRefreshState()
     val firstLoad by currentWeatherViewModel.firstLoad.collectAsState()
@@ -70,73 +76,88 @@ fun MainScreen(
 
     if (pullToRefreshState.isRefreshing) {
         LaunchedEffect(true) {
-            currentWeatherViewModel.updateCurrentWeather(city.id)
-            forecastViewModel.updateForecast(city.id)
+            if (!currentWeatherViewModel.updateCurrentWeather(city.id) || !forecastViewModel.updateForecast(
+                    city.id
+                )
+            ) {
+                currentWeatherViewModel.setUpdateFailed()
+            }
+            animatedBackgroundColor.animateTo(backgroundColor, animationSpec = tween(500))
             pullToRefreshState.endRefresh()
         }
     }
 
-    Scaffold(
-        containerColor = Color.Gray,
-        topBar = {
-            TopBar(currentWeatherViewModel, onCityClick)
-        },
-        modifier = Modifier.nestedScroll(pullToRefreshState.nestedScrollConnection)
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            Column(Modifier.verticalScroll(rememberScrollState())) {
-                Row(
-                    modifier = Modifier.padding(start = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+    Column(modifier = Modifier.drawBehind {
+        drawRect(animatedBackgroundColor.value)
+    }) {
+        Scaffold(
+            containerColor = Color.Transparent,
+            topBar = {
+                TopBar(currentWeatherViewModel, onCityClick)
+            },
+            modifier = Modifier.nestedScroll(pullToRefreshState.nestedScrollConnection)
+        ) { innerPadding ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+            ) {
+                Column(
+                    Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
                 ) {
-                    Icon(
-                        imageVector = ImageVector.vectorResource(R.drawable.baseline_schedule_24),
-                        contentDescription = "更新时间",
-                        tint = Color.White
+                    Row(
+                        modifier = Modifier.padding(start = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = ImageVector.vectorResource(R.drawable.baseline_schedule_24),
+                            contentDescription = "更新时间",
+                            tint = Color.White
+                        )
+                        Text(
+                            text = updateDurationValue,
+                            color = Color.White,
+                            style = MaterialTheme.typography.displaySmall
+                        )
+                    }
+                    CurrentWeatherView(
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .padding(top = 72.dp)
+                            .fillMaxWidth(),
+                        viewModel = currentWeatherViewModel
                     )
-                    Text(
-                        text = updateDurationValue,
-                        color = Color.White,
-                        style = MaterialTheme.typography.displaySmall
+                    Card(
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .padding(top = 48.dp, start = 16.dp, end = 16.dp)
+                            .fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surface,
+                        )
+                    ) {
+                        ForecastView(
+                            modifier = Modifier, viewModel = forecastViewModel
+                        )
+                    }
+                }
+
+                if (pullToRefreshState.verticalOffset > 0) {
+                    PullToRefreshContainer(
+                        modifier = Modifier.align(Alignment.TopCenter),
+                        state = pullToRefreshState
                     )
                 }
-                CurrentWeatherView(
-                    modifier = Modifier
-                        .align(Alignment.CenterHorizontally)
-                        .padding(top = 72.dp)
-                        .fillMaxWidth(),
-                    viewModel = currentWeatherViewModel
-                )
-                Card(
-                    modifier = Modifier
-                        .align(Alignment.CenterHorizontally)
-                        .padding(top = 48.dp, start = 16.dp, end = 16.dp)
-                        .fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                    )
-                ) {
-                    ForecastView(
-                        modifier = Modifier, viewModel = forecastViewModel
+
+                if (showDialog != null) {
+                    ForecastDialog(
+                        forecast = showDialog!!,
+                        onDismiss = { forecastViewModel.setShowDialog(null) }
                     )
                 }
-            }
-
-            PullToRefreshContainer(
-                modifier = Modifier.align(Alignment.TopCenter),
-                state = pullToRefreshState
-            )
-
-            if (showDialog != null) {
-                ForecastDialog(
-                    forecast = showDialog!!,
-                    onDismiss = { forecastViewModel.setShowDialog(null) }
-                )
             }
         }
     }
@@ -173,7 +194,7 @@ private fun TopBar(
                 )
             }
         },
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Gray)
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
     )
 }
 
@@ -330,6 +351,7 @@ fun MainScreenPreview() {
     val currentWeatherViewModel = CurrentWeatherViewModel(QWeatherService(context))
     val forecastViewModel = ForecastViewModel(QWeatherService(context))
     currentWeatherViewModel.setCurrentWeather(CurrentWeather("20", "晴"))
+    currentWeatherViewModel.updateBackgroundColor(100)
     forecastViewModel.setForecasts(
         listOf(
             Forecast(

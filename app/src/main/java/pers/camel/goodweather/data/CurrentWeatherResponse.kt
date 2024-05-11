@@ -16,7 +16,7 @@ data class Now(
     val obsTime: String,
     val temp: String,
     val feelsLike: String,
-    val icon: String,
+    val icon: Int,
     val text: String,
     val wind360: String,
     val windDir: String,

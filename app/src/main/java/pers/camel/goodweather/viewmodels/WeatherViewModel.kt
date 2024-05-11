@@ -1,5 +1,6 @@
 package pers.camel.goodweather.viewmodels
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -7,6 +8,19 @@ import kotlinx.coroutines.flow.asStateFlow
 import pers.camel.goodweather.R
 import pers.camel.goodweather.api.QWeatherService
 import pers.camel.goodweather.data.City
+import pers.camel.goodweather.ui.theme.cloudy
+import pers.camel.goodweather.ui.theme.foggy
+import pers.camel.goodweather.ui.theme.hail
+import pers.camel.goodweather.ui.theme.haze
+import pers.camel.goodweather.ui.theme.partlyCloudyDay
+import pers.camel.goodweather.ui.theme.partlyCloudyNight
+import pers.camel.goodweather.ui.theme.rainy
+import pers.camel.goodweather.ui.theme.sleet
+import pers.camel.goodweather.ui.theme.snow
+import pers.camel.goodweather.ui.theme.sunnyDay
+import pers.camel.goodweather.ui.theme.sunnyNight
+import pers.camel.goodweather.ui.theme.thunder
+import pers.camel.goodweather.ui.theme.wind
 import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -34,27 +48,61 @@ class CurrentWeatherViewModel @Inject constructor(
     private val _currentWeather = MutableStateFlow(CurrentWeather("--", ""))
     val currentWeather = _currentWeather.asStateFlow()
 
+    private val _backgroundColor = MutableStateFlow(cloudy)
+    val backgroundColor = _backgroundColor.asStateFlow()
+
     private val _firstLoad = MutableStateFlow(true)
     val firstLoad = _firstLoad.asStateFlow()
 
-    suspend fun updateCurrentWeather(cityId: String) {
-        val response = qWeatherService.getCurrentWeather(cityId).now
-        if (response == null) {
-            _currentWeather.value = CurrentWeather("--", "")
-            return
+    suspend fun updateCurrentWeather(cityId: String): Boolean {
+        val response = qWeatherService.getCurrentWeather(cityId).now ?: return false
+        try {
+            _currentWeather.value = CurrentWeather(response.temp, response.text)
+            updateBackgroundColor(response.icon)
+            _updateTime.value = LocalDateTime.now()
+            updateUpdateDuration()
+        } catch (e: Exception) {
+            Log.e("CurrentWeatherViewModel", "updateCurrentWeather error: $e")
+            return false
         }
-        _currentWeather.value = CurrentWeather(response.temp, response.text)
-        _updateTime.value = LocalDateTime.now()
+        return true
+    }
+
+    fun setUpdateFailed() {
+        _updateTime.value = LocalDateTime.MAX
         updateUpdateDuration()
     }
 
     fun updateUpdateDuration() {
+        if (_updateTime.value == LocalDateTime.MAX) {
+            _updateDuration.value = "更新失败"
+            return
+        }
         val duration = Duration.between(_updateTime.value, LocalDateTime.now()).toMinutes()
         _updateDuration.value = when {
             duration < 1 -> "刚刚更新"
             duration < 60 -> "${duration}分钟前"
             duration < 1440 -> "${duration / 60}小时前"
             else -> "${duration / 1440}天前"
+        }
+    }
+
+    fun updateBackgroundColor(icon: Int) {
+        _backgroundColor.value = when (icon) {
+            100 -> sunnyDay
+            101, 102, 103 -> partlyCloudyDay
+            104 -> cloudy
+            150 -> sunnyNight
+            151, 152, 153 -> partlyCloudyNight
+            302, 303 -> thunder
+            304 -> hail
+            in 300..399 -> rainy
+            404, 405, 406 -> sleet
+            in 400..499 -> snow
+            500, 501, 509, 510, 514, 515 -> foggy
+            in 503..508 -> wind
+            in 500..599 -> haze
+            else -> cloudy
         }
     }
 
@@ -89,6 +137,10 @@ data class Forecast(
 class ForecastViewModel @Inject constructor(
     private val qWeatherService: QWeatherService
 ) : ViewModel() {
+    companion object {
+        private const val TAG = "ForecastViewModel"
+    }
+
     private val _forecasts = MutableStateFlow<List<Forecast>>(
         emptyList()
     )
@@ -97,27 +149,29 @@ class ForecastViewModel @Inject constructor(
     private val _showDialog = MutableStateFlow<Forecast?>(null)
     val showDialog = _showDialog.asStateFlow()
 
-    suspend fun updateForecast(cityId: String) {
-        val response = qWeatherService.getForecast(cityId).daily
-        if (response == null) {
-            _forecasts.value = emptyList()
-            return
+    suspend fun updateForecast(cityId: String): Boolean {
+        val response = qWeatherService.getForecast(cityId).daily ?: return false
+        try {
+            _forecasts.value = response.map {
+                Forecast(
+                    LocalDate.parse(it.fxDate).format(DateTimeFormatter.ofPattern("M/d")),
+                    it.tempMax.toInt(),
+                    it.tempMin.toInt(),
+                    it.textDay,
+                    getImageId(it.iconDay),
+                    it.textNight,
+                    getImageId(it.iconNight),
+                    it.windDirDay,
+                    it.windScaleDay,
+                    it.windDirNight,
+                    it.windScaleNight
+                )
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "updateForecast error: $e")
+            return false
         }
-        _forecasts.value = response.map {
-            Forecast(
-                LocalDate.parse(it.fxDate).format(DateTimeFormatter.ofPattern("M/d")),
-                it.tempMax.toInt(),
-                it.tempMin.toInt(),
-                it.textDay,
-                getImageId(it.iconDay.toInt()),
-                it.textNight,
-                getImageId(it.iconNight.toInt()),
-                it.windDirDay,
-                it.windScaleDay,
-                it.windDirNight,
-                it.windScaleNight
-            )
-        }
+        return true
     }
 
     fun getImageId(imageId: Int): Int {
