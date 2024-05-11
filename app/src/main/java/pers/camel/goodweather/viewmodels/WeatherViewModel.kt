@@ -65,6 +65,10 @@ class CurrentWeatherViewModel @Inject constructor(
     fun setCurrentWeather(currentWeather: CurrentWeather) {
         _currentWeather.value = currentWeather
     }
+
+    fun setCurrentCity(city: City) {
+        _currentCity.value = city
+    }
 }
 
 data class Forecast(

@@ -58,6 +58,7 @@ fun MainScreen(
     onCityClick: () -> Unit
 ) {
     val city by currentWeatherViewModel.currentCity.collectAsState()
+    val updateDurationValue by currentWeatherViewModel.updateDuration.collectAsState()
     val pullToRefreshState = rememberPullToRefreshState()
     val firstLoad by currentWeatherViewModel.firstLoad.collectAsState()
     val showDialog by forecastViewModel.showDialog.collectAsState()
@@ -78,7 +79,7 @@ fun MainScreen(
     Scaffold(
         containerColor = Color.Gray,
         topBar = {
-            TopBar(Modifier, currentWeatherViewModel, onCityClick)
+            TopBar(currentWeatherViewModel, onCityClick)
         },
         modifier = Modifier.nestedScroll(pullToRefreshState.nestedScrollConnection)
     ) { innerPadding ->
@@ -88,10 +89,26 @@ fun MainScreen(
                 .padding(innerPadding)
         ) {
             Column(Modifier.verticalScroll(rememberScrollState())) {
+                Row(
+                    modifier = Modifier.padding(start = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        imageVector = ImageVector.vectorResource(R.drawable.baseline_schedule_24),
+                        contentDescription = "更新时间",
+                        tint = Color.White
+                    )
+                    Text(
+                        text = updateDurationValue,
+                        color = Color.White,
+                        style = MaterialTheme.typography.displaySmall
+                    )
+                }
                 CurrentWeatherView(
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally)
-                        .padding(top = 96.dp)
+                        .padding(top = 72.dp)
                         .fillMaxWidth(),
                     viewModel = currentWeatherViewModel
                 )
@@ -128,12 +145,10 @@ fun MainScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TopBar(
-    modifier: Modifier = Modifier,
     viewModel: CurrentWeatherViewModel,
     onCityClick: () -> Unit = {}
 ) {
     val city by viewModel.currentCity.collectAsState()
-    val updateDurationValue by viewModel.updateDuration.collectAsState()
 
     LaunchedEffect(true) {
         Timer().schedule(60000, 60000) {
@@ -143,38 +158,11 @@ private fun TopBar(
 
     TopAppBar(
         title = {
-            Column(
-                modifier = modifier,
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = city.name,
-                        color = Color.White,
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                }
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Icon(
-                        imageVector = ImageVector.vectorResource(R.drawable.baseline_schedule_24),
-                        contentDescription = "更新时间",
-                        tint = Color.White
-                    )
-                    Text(
-                        text = updateDurationValue,
-                        color = Color.White,
-                        style = MaterialTheme.typography.displaySmall
-                    )
-                }
-            }
+            Text(
+                text = city.name,
+                color = Color.White,
+                style = MaterialTheme.typography.titleMedium
+            )
         },
         actions = {
             IconButton(onClick = onCityClick) {
@@ -321,7 +309,7 @@ private fun ForecastDialog(
                     )
                     Column {
                         Text(
-                            text = "${forecast.descriptionNight}, ${forecast.temperatureMax}°C",
+                            text = "${forecast.descriptionNight}, ${forecast.temperatureMin}°C",
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Text(

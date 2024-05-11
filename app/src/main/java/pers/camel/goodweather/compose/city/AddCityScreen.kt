@@ -23,6 +23,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -58,10 +60,13 @@ fun AddCityScreen(
     val cities by searchCityResultViewModel.cities.collectAsState()
     val loading by searchCityResultViewModel.loading.collectAsState()
     val error by searchCityResultViewModel.error.collectAsState()
+    val coroutineScope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surface,
-        topBar = { TopBar(onBackClick) }
+        topBar = { TopBar(onBackClick) },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { innerPadding ->
         Column(modifier = Modifier.padding(innerPadding)) {
             SearchBar(
@@ -78,8 +83,18 @@ fun AddCityScreen(
                 ) {
                     items(cities, key = { it.id }) { city ->
                         CityItem(city) {
-                            cityViewModel.addCity(city)
-                            onBackClick()
+                            if (cityViewModel.cities.value.contains(city)) {
+                                coroutineScope.launch {
+                                    snackbarHostState.currentSnackbarData?.dismiss()
+                                    snackbarHostState.showSnackbar(
+                                        "城市 ${city.name} 已存在",
+                                        withDismissAction = true
+                                    )
+                                }
+                            } else {
+                                cityViewModel.addCity(city)
+                                onBackClick()
+                            }
                         }
                     }
                 }

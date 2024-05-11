@@ -51,14 +51,15 @@ class MainActivity : ComponentActivity() {
         setContent {
             GoodWeatherTheme {
                 val navController = rememberNavController()
+                val currentWeatherViewModel = hiltViewModel<CurrentWeatherViewModel>()
+                val forecastViewModel = hiltViewModel<ForecastViewModel>()
+                val searchCityResultViewModel = hiltViewModel<SearchCityResultViewModel>()
                 NavHost(
                     navController,
                     startDestination = "main",
                 ) {
                     composable(route = "main", enterTransition = { EnterTransition.None },
                         popEnterTransition = { EnterTransition.None }) {
-                        val currentWeatherViewModel = hiltViewModel<CurrentWeatherViewModel>()
-                        val forecastViewModel = hiltViewModel<ForecastViewModel>()
                         MainScreen(currentWeatherViewModel, forecastViewModel, onCityClick = {
                             navController.navigate("city")
                         })
@@ -69,7 +70,7 @@ class MainActivity : ComponentActivity() {
                         popEnterTransition = { EnterTransition.None },
                         popExitTransition = popExitTransition
                     ) {
-                        CityScreen(cityViewModel, onBackClick = {
+                        CityScreen(cityViewModel, currentWeatherViewModel, onBackClick = {
                             navController.popBackStack()
                         }, onAddCityClick = {
                             navController.navigate("addCity")
@@ -80,7 +81,6 @@ class MainActivity : ComponentActivity() {
                         enterTransition = enterTransition,
                         popExitTransition = popExitTransition,
                     ) {
-                        val searchCityResultViewModel = hiltViewModel<SearchCityResultViewModel>()
                         AddCityScreen(searchCityResultViewModel, cityViewModel) {
                             navController.popBackStack()
                         }
