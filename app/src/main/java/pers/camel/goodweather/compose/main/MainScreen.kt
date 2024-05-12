@@ -1,5 +1,6 @@
 package pers.camel.goodweather.compose.main
 
+import android.util.Log
 import androidx.compose.animation.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
@@ -41,12 +42,15 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import pers.camel.goodweather.R
 import pers.camel.goodweather.api.QWeatherService
+import pers.camel.goodweather.permission.LocationPermission
 import pers.camel.goodweather.ui.theme.GoodWeatherTheme
+import pers.camel.goodweather.viewmodels.CityViewModel
 import pers.camel.goodweather.viewmodels.CurrentWeather
 import pers.camel.goodweather.viewmodels.CurrentWeatherViewModel
 import pers.camel.goodweather.viewmodels.Forecast
@@ -57,21 +61,70 @@ import kotlin.concurrent.schedule
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
+    locationPermission: LocationPermission,
     currentWeatherViewModel: CurrentWeatherViewModel,
     forecastViewModel: ForecastViewModel,
+    cityViewModel: CityViewModel,
     onCityClick: () -> Unit
 ) {
+    val tag = "MainScreen"
     val city by currentWeatherViewModel.currentCity.collectAsState()
     val backgroundColor by currentWeatherViewModel.backgroundColor.collectAsState()
-    val animatedBackgroundColor = remember { Animatable(backgroundColor) }
     val updateDurationValue by currentWeatherViewModel.updateDuration.collectAsState()
-    val pullToRefreshState = rememberPullToRefreshState()
     val firstLoad by currentWeatherViewModel.firstLoad.collectAsState()
     val showDialog by forecastViewModel.showDialog.collectAsState()
+    val animatedBackgroundColor = remember { Animatable(backgroundColor) }
+    val pullToRefreshState = rememberPullToRefreshState()
+    val location by currentWeatherViewModel.location.collectAsState()
 
     if (firstLoad) {
-        pullToRefreshState.startRefresh()
         currentWeatherViewModel.setFirstLoad(false)
+        pullToRefreshState.startRefresh()
+    }
+
+    locationPermission.RequestLocationPermission(
+        onPermissionGranted = {
+            Log.i(tag, "Location Permission Granted...")
+            // Attempt to get the last known user location
+            locationPermission.getLastUserLocation(
+                onGetLastLocationSuccess = {
+                    Log.i(tag, "Last known location: $it")
+                    currentWeatherViewModel.setLocation(it)
+                },
+                onGetLastLocationFailed = { exception ->
+                    Log.e(tag, "Error getting last location: $exception")
+                },
+                onGetLastLocationIsNull = {
+                    Log.i(tag, "Last known location is null...")
+                    // Attempt to get the current user location
+                    locationPermission.getCurrentLocation(
+                        onGetCurrentLocationSuccess = {
+                            Log.i(tag, "Current location: $it")
+                            currentWeatherViewModel.setLocation(it)
+                        },
+                        onGetCurrentLocationFailed = { exception ->
+                            Log.e(tag, "Error getting current location: $exception")
+                        },
+                        onGetCurrentLocationIsNull = {
+                            Log.e(tag, "Current location is null...")
+                        }
+                    )
+                }
+            )
+        },
+        onPermissionDenied = {
+            Log.w(tag, "Location Permission Denied...")
+        },
+        onPermissionsRevoked = {
+            Log.w(tag, "Location Permission Revoked...")
+        }
+    )
+    LaunchedEffect(location) {
+        Log.e(tag, "Location: $location")
+        if (location != null) {
+            currentWeatherViewModel.getUserCity(location!!.second, location!!.first, cityViewModel)
+            pullToRefreshState.startRefresh()
+        }
     }
 
     if (pullToRefreshState.isRefreshing) {
@@ -242,21 +295,25 @@ private fun ForecastView(
                     .clickable {
                         viewModel.setShowDialog(it)
                     },
-                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = it.date,
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.weight(1f)
                 )
                 Image(
                     painter = painterResource(id = it.imageDay),
                     contentDescription = it.descriptionDay,
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier
+                        .size(32.dp)
+                        .weight(1f)
                 )
                 Text(
                     text = "${it.temperatureMin}°C/${it.temperatureMax}°C",
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.End,
+                    modifier = Modifier.weight(1f)
                 )
             }
         }
@@ -348,6 +405,7 @@ private fun ForecastDialog(
 @Composable
 fun MainScreenPreview() {
     val context = LocalContext.current
+    val locationPermission = LocationPermission(context)
     val currentWeatherViewModel = CurrentWeatherViewModel(QWeatherService(context))
     val forecastViewModel = ForecastViewModel(QWeatherService(context))
     currentWeatherViewModel.setCurrentWeather(CurrentWeather("20", "晴"))
@@ -356,8 +414,8 @@ fun MainScreenPreview() {
         listOf(
             Forecast(
                 "5/1",
-                30,
-                20,
+                3,
+                2,
                 "晴",
                 forecastViewModel.getImageId(100),
                 "晴",
@@ -369,8 +427,8 @@ fun MainScreenPreview() {
             ),
             Forecast(
                 "5/2",
-                31,
-                21,
+                18,
+                9,
                 "多云",
                 forecastViewModel.getImageId(101),
                 "多云",
@@ -447,8 +505,14 @@ fun MainScreenPreview() {
             ),
         )
     )
+    val cityViewModel = CityViewModel()
     GoodWeatherTheme {
-        MainScreen(currentWeatherViewModel, forecastViewModel) {}
+        MainScreen(
+            locationPermission,
+            currentWeatherViewModel,
+            forecastViewModel,
+            cityViewModel
+        ) {}
     }
 }
 

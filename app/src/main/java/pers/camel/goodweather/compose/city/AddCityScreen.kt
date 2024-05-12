@@ -83,7 +83,7 @@ fun AddCityScreen(
                 ) {
                     items(cities, key = { it.id }) { city ->
                         CityItem(city) {
-                            if (cityViewModel.cities.value.contains(city)) {
+                            if (!cityViewModel.addCity(city)) {
                                 coroutineScope.launch {
                                     snackbarHostState.currentSnackbarData?.dismiss()
                                     snackbarHostState.showSnackbar(
@@ -92,7 +92,6 @@ fun AddCityScreen(
                                     )
                                 }
                             } else {
-                                cityViewModel.addCity(city)
                                 onBackClick()
                             }
                         }

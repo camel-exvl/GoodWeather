@@ -20,6 +20,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import pers.camel.goodweather.compose.city.AddCityScreen
 import pers.camel.goodweather.compose.city.CityScreen
 import pers.camel.goodweather.compose.main.MainScreen
+import pers.camel.goodweather.permission.LocationPermission
 import pers.camel.goodweather.ui.theme.GoodWeatherTheme
 import pers.camel.goodweather.viewmodels.CityViewModel
 import pers.camel.goodweather.viewmodels.CurrentWeatherViewModel
@@ -44,6 +45,7 @@ class MainActivity : ComponentActivity() {
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val locationPermission = LocationPermission(this)
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         val cityViewModel: CityViewModel by viewModels()
@@ -54,15 +56,21 @@ class MainActivity : ComponentActivity() {
                 val currentWeatherViewModel = hiltViewModel<CurrentWeatherViewModel>()
                 val forecastViewModel = hiltViewModel<ForecastViewModel>()
                 val searchCityResultViewModel = hiltViewModel<SearchCityResultViewModel>()
+
                 NavHost(
                     navController,
                     startDestination = "main",
                 ) {
                     composable(route = "main", enterTransition = { EnterTransition.None },
                         popEnterTransition = { EnterTransition.None }) {
-                        MainScreen(currentWeatherViewModel, forecastViewModel, onCityClick = {
-                            navController.navigate("city")
-                        })
+                        MainScreen(
+                            locationPermission,
+                            currentWeatherViewModel,
+                            forecastViewModel,
+                            cityViewModel,
+                            onCityClick = {
+                                navController.navigate("city")
+                            })
                     }
                     composable(
                         route = "city",

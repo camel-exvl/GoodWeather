@@ -37,6 +37,9 @@ class CurrentWeatherViewModel @Inject constructor(
     private val qWeatherService: QWeatherService
 ) : ViewModel() {
 
+    private val _location = MutableStateFlow<Pair<Double, Double>?>(null)
+    val location = _location.asStateFlow()
+
     private val _currentCity = MutableStateFlow(City("101010100", "北京", "北京", "北京市", "中国"))
     val currentCity = _currentCity.asStateFlow()
 
@@ -66,6 +69,22 @@ class CurrentWeatherViewModel @Inject constructor(
             return false
         }
         return true
+    }
+
+    suspend fun getUserCity(longitude: Double, latitude: Double, cityViewModel: CityViewModel) {
+        val response = qWeatherService.getCity("$longitude,$latitude").location
+        if (response != null) {
+            _currentCity.value = City(
+                response[0].id,
+                response[0].name,
+                response[0].adm2,
+                response[0].adm1,
+                response[0].country
+            )
+        } else {
+            _currentCity.value = City("101010100", "北京", "北京", "北京市", "中国")
+        }
+        cityViewModel.setUserCity(_currentCity.value)
     }
 
     fun setUpdateFailed() {
@@ -116,6 +135,10 @@ class CurrentWeatherViewModel @Inject constructor(
 
     fun setCurrentCity(city: City) {
         _currentCity.value = city
+    }
+
+    fun setLocation(location: Pair<Double, Double>) {
+        _location.value = location
     }
 }
 

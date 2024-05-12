@@ -7,19 +7,45 @@ import pers.camel.goodweather.data.City
 
 
 class CityViewModel : ViewModel() {
-    private val _cities =
-        MutableStateFlow(listOf(City("101010100", "北京", "北京", "北京市", "中国")))
-    val cities = _cities.asStateFlow()
+    private val defaultCity = City("101010100", "北京", "北京", "北京市", "中国")
 
-    fun addCity(city: City) {
-        _cities.value += city
+    private val _allCities =
+        MutableStateFlow(listOf(defaultCity))
+    val cities = _allCities.asStateFlow()
+
+    private val _userCity = MutableStateFlow(defaultCity)
+
+    private val _otherCities = MutableStateFlow<List<City>>(emptyList())
+
+    fun addCity(city: City): Boolean {
+        if (_allCities.value.contains(city)) {
+            return false
+        }
+        _otherCities.value += city
+        updateAllCities()
+        return true
     }
 
     fun removeCity(city: City) {
-        _cities.value -= city
+        _otherCities.value -= city
+        updateAllCities()
     }
 
+    fun setUserCity(city: City) {
+        if (_otherCities.value.contains(city)) {
+            _otherCities.value -= city
+        }
+        _userCity.value = city
+        updateAllCities()
+    }
+
+    private fun updateAllCities() {
+        _allCities.value = (listOf(_userCity.value)) + _otherCities.value
+    }
+
+    // ONLY FOR PREVIEW
+    @Suppress("unused")
     fun setCities(cities: List<City>) {
-        _cities.value = cities
+        _allCities.value = cities
     }
 }
