@@ -10,12 +10,14 @@ import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import kotlinx.coroutines.rx3.awaitFirst
 import pers.camel.goodweather.data.LocationData
 
-class LocationPermission(private val context: Context) {
-    private val locationService = LocationService(context)
+open class LocationPermission(
+    private val context: Context,
+    private val locationService: LocationService
+) {
 
     @OptIn(ExperimentalPermissionsApi::class)
     @Composable
-    fun RequestLocationPermission(
+    open fun RequestLocationPermission(
         onPermissionGranted: () -> Unit,
         onPermissionDenied: () -> Unit,
         onPermissionsRevoked: () -> Unit
@@ -35,22 +37,21 @@ class LocationPermission(private val context: Context) {
         val permissionsToRequest = permissionState.permissions.filter {
             !it.status.isGranted
         }
-
-        // If there are permissions to request, launch the permission request.
-        if (permissionsToRequest.isNotEmpty()) {
-            LaunchedEffect(true) {
+        LaunchedEffect(permissionState.revokedPermissions) {
+            // If there are permissions to request, launch the permission request.
+            if (permissionsToRequest.isNotEmpty()) {
                 permissionState.launchMultiplePermissionRequest()
             }
-        }
 
-        // Execute callbacks based on permission status.
-        if (allPermissionsRevoked) {
-            onPermissionsRevoked()
-        } else {
-            if (permissionState.allPermissionsGranted) {
-                onPermissionGranted()
+            // Execute callbacks based on permission status.
+            if (allPermissionsRevoked) {
+                onPermissionsRevoked()
             } else {
-                onPermissionDenied()
+                if (permissionState.allPermissionsGranted) {
+                    onPermissionGranted()
+                } else {
+                    onPermissionDenied()
+                }
             }
         }
     }

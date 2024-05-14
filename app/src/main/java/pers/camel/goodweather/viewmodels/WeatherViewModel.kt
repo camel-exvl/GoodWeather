@@ -37,12 +37,12 @@ data class CurrentWeather(
 class CurrentWeatherViewModel @Inject constructor(
     private val qWeatherService: QWeatherService
 ) : ViewModel() {
+    private val defaultCity = City("101010100", "北京", "北京", "北京市", "中国")
 
-    private val _location = MutableStateFlow<LocationData?>(null)
-    val location = _location.asStateFlow()
-
-    private val _currentCity = MutableStateFlow(City("101010100", "北京", "北京", "北京市", "中国"))
+    private val _currentCity = MutableStateFlow(defaultCity)
     val currentCity = _currentCity.asStateFlow()
+
+    private val _userCity = MutableStateFlow<City?>(null)
 
     private val _updateTime = MutableStateFlow(LocalDateTime.MIN)
 
@@ -76,17 +76,25 @@ class CurrentWeatherViewModel @Inject constructor(
         val response =
             qWeatherService.getCity("${locationData.longitude},${locationData.latitude}").location
         if (response != null) {
-            _currentCity.value = City(
+            val city = City(
                 response[0].id,
                 response[0].name,
                 response[0].adm2,
                 response[0].adm1,
                 response[0].country
             )
+            // Only update if the city is different
+            if (_userCity.value != city) {
+                _userCity.value = city
+                _currentCity.value = _userCity.value!!
+            }
         } else {
-            _currentCity.value = City("101010100", "北京", "北京", "北京市", "中国")
+            if (_userCity.value == null) {
+                _userCity.value = defaultCity
+                _currentCity.value = _userCity.value!!
+            }
         }
-        cityViewModel.setUserCity(_currentCity.value)
+        cityViewModel.setUserCity(_userCity.value!!)
     }
 
     fun setUpdateFailed() {
@@ -139,8 +147,8 @@ class CurrentWeatherViewModel @Inject constructor(
         _currentCity.value = city
     }
 
-    fun setLocation(location: LocationData) {
-        _location.value = location
+    fun showUserCity(): Boolean {
+        return _userCity.value == _currentCity.value
     }
 }
 

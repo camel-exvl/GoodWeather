@@ -39,6 +39,10 @@ class CityViewModel : ViewModel() {
         updateAllCities()
     }
 
+    fun isUserCity(city: City): Boolean {
+        return _userCity.value == city
+    }
+
     private fun updateAllCities() {
         _allCities.value = (listOf(_userCity.value)) + _otherCities.value
     }

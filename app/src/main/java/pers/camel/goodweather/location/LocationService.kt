@@ -71,19 +71,22 @@ class LocationService(private val context: Context) : LocationListenerCompat {
             for (i in 1..TIMEOUT_MILLIS / 1000) {
                 delay(1000)
 
-                androidLocation?.let {
+                if (androidLocation != null) {
                     clearLocationUpdates()
-                    send(LocationData(it.latitude, it.longitude))
+                    send(LocationData(androidLocation!!.latitude, androidLocation!!.longitude))
+                    break
                 }
             }
 
-            clearLocationUpdates()
-            getLastKnownLocation(locationManager)?.let {
-                send(LocationData(it.latitude, it.longitude))
-            } ?: run {
-                // Actually it’s a timeout, but it is more reasonable to say it failed to find location
-                Log.e(TAG, "Failed to find location")
-                throw LocationException("Failed to find location", SecurityException())
+            if (androidLocation == null) {
+                clearLocationUpdates()
+                getLastKnownLocation(locationManager)?.let {
+                    send(LocationData(it.latitude, it.longitude))
+                } ?: run {
+                    // Actually it’s a timeout, but it is more reasonable to say it failed to find location
+                    Log.e(TAG, "Failed to find location")
+                    throw LocationException("Failed to find location", SecurityException())
+                }
             }
         }.doOnDispose {
             clearLocationUpdates()

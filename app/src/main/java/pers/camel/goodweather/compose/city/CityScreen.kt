@@ -3,14 +3,18 @@ package pers.camel.goodweather.compose.city
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -69,7 +73,7 @@ fun CityScreen(
                 .padding(top = 8.dp)
         ) {
             items(cities, key = { it.id }) { city ->
-                CityItem(city.name, onClick = {
+                CityItem(city, cityViewModel.isUserCity(city), onClick = {
                     currentWeatherViewModel.setCurrentCity(city)
                     currentWeatherViewModel.setFirstLoad(true)
                     onBackClick()
@@ -126,7 +130,12 @@ private fun TopBar(onBackClick: () -> Unit, onAddCityClick: () -> Unit) {
 }
 
 @Composable
-private fun CityItem(city: String, onClick: () -> Unit, onDelete: () -> Unit) {
+private fun CityItem(
+    city: City,
+    showLocation: Boolean,
+    onClick: () -> Unit,
+    onDelete: () -> Unit
+) {
     SwipeBox(
         modifier = Modifier
             .fillMaxSize()
@@ -134,11 +143,20 @@ private fun CityItem(city: String, onClick: () -> Unit, onDelete: () -> Unit) {
         onDelete = onDelete
     ) {
         ListItem(headlineContent = {
-            Text(
-                modifier = Modifier.padding(16.dp),
-                text = city,
-                style = MaterialTheme.typography.bodyMedium
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    modifier = Modifier.padding(16.dp),
+                    text = city.name,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                if (showLocation) {
+                    Icon(imageVector = Icons.Filled.LocationOn, contentDescription = "定位")
+                }
+            }
         })
     }
 }

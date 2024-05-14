@@ -21,6 +21,7 @@ import pers.camel.goodweather.compose.city.AddCityScreen
 import pers.camel.goodweather.compose.city.CityScreen
 import pers.camel.goodweather.compose.main.MainScreen
 import pers.camel.goodweather.location.LocationPermission
+import pers.camel.goodweather.location.LocationService
 import pers.camel.goodweather.ui.theme.GoodWeatherTheme
 import pers.camel.goodweather.viewmodels.CityViewModel
 import pers.camel.goodweather.viewmodels.CurrentWeatherViewModel
@@ -43,9 +44,10 @@ class MainActivity : ComponentActivity() {
                 towards = AnimatedContentTransitionScope.SlideDirection.End
             )
         }
+    private val locationService = LocationService(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        val locationPermission = LocationPermission(this)
+        val locationPermission = LocationPermission(this, locationService)
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         val cityViewModel: CityViewModel by viewModels()

@@ -1,5 +1,6 @@
 package pers.camel.goodweather.compose.main
 
+import android.content.Context
 import android.util.Log
 import androidx.compose.animation.Animatable
 import androidx.compose.animation.core.tween
@@ -15,6 +16,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -55,6 +58,7 @@ import pers.camel.goodweather.api.QWeatherService
 import pers.camel.goodweather.data.LocationData
 import pers.camel.goodweather.location.GPSDisabledException
 import pers.camel.goodweather.location.LocationPermission
+import pers.camel.goodweather.location.LocationService
 import pers.camel.goodweather.ui.theme.GoodWeatherTheme
 import pers.camel.goodweather.viewmodels.CityViewModel
 import pers.camel.goodweather.viewmodels.CurrentWeather
@@ -83,12 +87,12 @@ fun MainScreen(
     val showDialog by forecastViewModel.showDialog.collectAsState()
     val animatedBackgroundColor = remember { Animatable(backgroundColor) }
     val pullToRefreshState = rememberPullToRefreshState()
-    val location by currentWeatherViewModel.location.collectAsState()
 
     if (firstLoad) {
         currentWeatherViewModel.setFirstLoad(false)
         pullToRefreshState.startRefresh()
     }
+
 
     locationPermission.RequestLocationPermission(
         onPermissionGranted = {
@@ -96,14 +100,18 @@ fun MainScreen(
             coroutineScope.launch {
                 try {
                     locationPermission.getLocation().let {
-                        Log.e(tag, "latitude: ${it.latitude}, longitude: ${it.longitude}")
-                        currentWeatherViewModel.setLocation(
+                        Log.i(
+                            tag,
+                            "Get location success. Latitude: ${it.latitude}, Longitude: ${it.longitude}"
+                        )
+                        snackbarHostState.currentSnackbarData?.dismiss()
+                        currentWeatherViewModel.getUserCity(
                             LocationData(
                                 it.latitude,
                                 it.longitude
-                            )
+                            ), cityViewModel
                         )
-                        snackbarHostState.currentSnackbarData?.dismiss()
+                        pullToRefreshState.startRefresh()
                     }
                 } catch (e: GPSDisabledException) {
                     snackbarHostState.currentSnackbarData?.dismiss()
@@ -141,13 +149,6 @@ fun MainScreen(
             }
         }
     )
-    LaunchedEffect(location) {
-        Log.e(tag, "Location: $location")
-        if (location != null) {
-            currentWeatherViewModel.getUserCity(location!!, cityViewModel)
-            pullToRefreshState.startRefresh()
-        }
-    }
 
     if (pullToRefreshState.isRefreshing) {
         LaunchedEffect(true) {
@@ -255,11 +256,20 @@ private fun TopBar(
 
     TopAppBar(
         title = {
-            Text(
-                text = city.name,
-                color = Color.White,
-                style = MaterialTheme.typography.titleMedium
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (viewModel.showUserCity()) {
+                    Icon(
+                        imageVector = Icons.Filled.LocationOn,
+                        contentDescription = "定位",
+                        tint = Color.White
+                    )
+                }
+                Text(
+                    text = city.name,
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
         },
         actions = {
             IconButton(onClick = onCityClick) {
@@ -424,11 +434,22 @@ private fun ForecastDialog(
     }
 }
 
+class PreviewLocationPermission(context: Context, locationService: LocationService) :
+    LocationPermission(context, locationService) {
+    @Composable
+    override fun RequestLocationPermission(
+        onPermissionGranted: () -> Unit,
+        onPermissionDenied: () -> Unit,
+        onPermissionsRevoked: () -> Unit
+    ) {
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 fun MainScreenPreview() {
     val context = LocalContext.current
-    val locationPermission = LocationPermission(context)
+    val locationPermission = PreviewLocationPermission(context, LocationService(context))
     val currentWeatherViewModel = CurrentWeatherViewModel(QWeatherService(context))
     val forecastViewModel = ForecastViewModel(QWeatherService(context))
     currentWeatherViewModel.setCurrentWeather(CurrentWeather("20", "晴"))
