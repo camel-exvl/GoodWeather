@@ -16,3 +16,4 @@
 ## Reference
 
 - [Weather Pixel Icon](https://github.com/breezy-weather/pixel-icon-provider): [LGPL-3.0 License](https://github.com/breezy-weather/pixel-icon-provider/blob/main/LICENSE)
+- [Location Service in Android](https://github.com/breezy-weather/breezy-weather/blob/main/app/src/main/java/org/breezyweather/sources/android/AndroidLocationService.kt): [LGPL-3.0 License](https://github.com/breezy-weather/breezy-weather/blob/main/LICENSE)

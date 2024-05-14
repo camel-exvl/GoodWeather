@@ -23,6 +23,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -33,6 +35,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -46,9 +49,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import kotlinx.coroutines.launch
 import pers.camel.goodweather.R
 import pers.camel.goodweather.api.QWeatherService
-import pers.camel.goodweather.permission.LocationPermission
+import pers.camel.goodweather.data.LocationData
+import pers.camel.goodweather.location.GPSDisabledException
+import pers.camel.goodweather.location.LocationPermission
 import pers.camel.goodweather.ui.theme.GoodWeatherTheme
 import pers.camel.goodweather.viewmodels.CityViewModel
 import pers.camel.goodweather.viewmodels.CurrentWeather
@@ -68,6 +74,8 @@ fun MainScreen(
     onCityClick: () -> Unit
 ) {
     val tag = "MainScreen"
+    val coroutineScope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
     val city by currentWeatherViewModel.currentCity.collectAsState()
     val backgroundColor by currentWeatherViewModel.backgroundColor.collectAsState()
     val updateDurationValue by currentWeatherViewModel.updateDuration.collectAsState()
@@ -85,44 +93,58 @@ fun MainScreen(
     locationPermission.RequestLocationPermission(
         onPermissionGranted = {
             Log.i(tag, "Location Permission Granted...")
-            // Attempt to get the last known user location
-            locationPermission.getLastUserLocation(
-                onGetLastLocationSuccess = {
-                    Log.i(tag, "Last known location: $it")
-                    currentWeatherViewModel.setLocation(it)
-                },
-                onGetLastLocationFailed = { exception ->
-                    Log.e(tag, "Error getting last location: $exception")
-                },
-                onGetLastLocationIsNull = {
-                    Log.i(tag, "Last known location is null...")
-                    // Attempt to get the current user location
-                    locationPermission.getCurrentLocation(
-                        onGetCurrentLocationSuccess = {
-                            Log.i(tag, "Current location: $it")
-                            currentWeatherViewModel.setLocation(it)
-                        },
-                        onGetCurrentLocationFailed = { exception ->
-                            Log.e(tag, "Error getting current location: $exception")
-                        },
-                        onGetCurrentLocationIsNull = {
-                            Log.e(tag, "Current location is null...")
-                        }
+            coroutineScope.launch {
+                try {
+                    locationPermission.getLocation().let {
+                        Log.e(tag, "latitude: ${it.latitude}, longitude: ${it.longitude}")
+                        currentWeatherViewModel.setLocation(
+                            LocationData(
+                                it.latitude,
+                                it.longitude
+                            )
+                        )
+                        snackbarHostState.currentSnackbarData?.dismiss()
+                    }
+                } catch (e: GPSDisabledException) {
+                    snackbarHostState.currentSnackbarData?.dismiss()
+                    snackbarHostState.showSnackbar(
+                        "定位服务未开启，使用默认位置",
+                        withDismissAction = true
+                    )
+                } catch (e: Exception) {
+                    snackbarHostState.currentSnackbarData?.dismiss()
+                    snackbarHostState.showSnackbar(
+                        "定位失败，使用默认位置",
+                        withDismissAction = true
                     )
                 }
-            )
+            }
         },
         onPermissionDenied = {
             Log.w(tag, "Location Permission Denied...")
+            coroutineScope.launch {
+                snackbarHostState.currentSnackbarData?.dismiss()
+                snackbarHostState.showSnackbar(
+                    "未授予定位权限，使用默认位置",
+                    withDismissAction = true
+                )
+            }
         },
         onPermissionsRevoked = {
             Log.w(tag, "Location Permission Revoked...")
+            coroutineScope.launch {
+                snackbarHostState.currentSnackbarData?.dismiss()
+                snackbarHostState.showSnackbar(
+                    "未授予定位权限，使用默认位置",
+                    withDismissAction = true
+                )
+            }
         }
     )
     LaunchedEffect(location) {
         Log.e(tag, "Location: $location")
         if (location != null) {
-            currentWeatherViewModel.getUserCity(location!!.second, location!!.first, cityViewModel)
+            currentWeatherViewModel.getUserCity(location!!, cityViewModel)
             pullToRefreshState.startRefresh()
         }
     }
@@ -148,6 +170,7 @@ fun MainScreen(
             topBar = {
                 TopBar(currentWeatherViewModel, onCityClick)
             },
+            snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
             modifier = Modifier.nestedScroll(pullToRefreshState.nestedScrollConnection)
         ) { innerPadding ->
             Box(

@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import pers.camel.goodweather.R
 import pers.camel.goodweather.api.QWeatherService
 import pers.camel.goodweather.data.City
+import pers.camel.goodweather.data.LocationData
 import pers.camel.goodweather.ui.theme.cloudy
 import pers.camel.goodweather.ui.theme.foggy
 import pers.camel.goodweather.ui.theme.hail
@@ -37,7 +38,7 @@ class CurrentWeatherViewModel @Inject constructor(
     private val qWeatherService: QWeatherService
 ) : ViewModel() {
 
-    private val _location = MutableStateFlow<Pair<Double, Double>?>(null)
+    private val _location = MutableStateFlow<LocationData?>(null)
     val location = _location.asStateFlow()
 
     private val _currentCity = MutableStateFlow(City("101010100", "北京", "北京", "北京市", "中国"))
@@ -71,8 +72,9 @@ class CurrentWeatherViewModel @Inject constructor(
         return true
     }
 
-    suspend fun getUserCity(longitude: Double, latitude: Double, cityViewModel: CityViewModel) {
-        val response = qWeatherService.getCity("$longitude,$latitude").location
+    suspend fun getUserCity(locationData: LocationData, cityViewModel: CityViewModel) {
+        val response =
+            qWeatherService.getCity("${locationData.longitude},${locationData.latitude}").location
         if (response != null) {
             _currentCity.value = City(
                 response[0].id,
@@ -137,7 +139,7 @@ class CurrentWeatherViewModel @Inject constructor(
         _currentCity.value = city
     }
 
-    fun setLocation(location: Pair<Double, Double>) {
+    fun setLocation(location: LocationData) {
         _location.value = location
     }
 }

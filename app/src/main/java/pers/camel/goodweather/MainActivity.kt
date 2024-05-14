@@ -20,7 +20,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import pers.camel.goodweather.compose.city.AddCityScreen
 import pers.camel.goodweather.compose.city.CityScreen
 import pers.camel.goodweather.compose.main.MainScreen
-import pers.camel.goodweather.permission.LocationPermission
+import pers.camel.goodweather.location.LocationPermission
 import pers.camel.goodweather.ui.theme.GoodWeatherTheme
 import pers.camel.goodweather.viewmodels.CityViewModel
 import pers.camel.goodweather.viewmodels.CurrentWeatherViewModel

@@ -75,6 +75,8 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.play.services.location)
     implementation(libs.accompanist.permissions)
+    implementation(libs.rxjava)
+    implementation(libs.kotlinx.coroutines.rx3)
 
     testImplementation(libs.junit)
     testImplementation(libs.hilt.android.testing)
