@@ -17,6 +17,9 @@ class CityViewModel : ViewModel() {
 
     private val _otherCities = MutableStateFlow<List<City>>(emptyList())
 
+    private val _showUserCity = MutableStateFlow(true)
+    val showUserCity = _showUserCity.asStateFlow()
+
     fun addCity(city: City): Boolean {
         if (_allCities.value.contains(city)) {
             return false
@@ -27,7 +30,11 @@ class CityViewModel : ViewModel() {
     }
 
     fun removeCity(city: City) {
-        _otherCities.value -= city
+        if (_userCity.value == city) {
+            _showUserCity.value = false
+        } else {
+            _otherCities.value -= city
+        }
         updateAllCities()
     }
 
@@ -43,8 +50,17 @@ class CityViewModel : ViewModel() {
         return _userCity.value == city
     }
 
+    fun showUserCity() {
+        _showUserCity.value = true
+        updateAllCities()
+    }
+
     private fun updateAllCities() {
-        _allCities.value = (listOf(_userCity.value)) + _otherCities.value
+        if (_showUserCity.value) {
+            _allCities.value = (listOf(_userCity.value)) + _otherCities.value
+        } else {
+            _allCities.value = _otherCities.value
+        }
     }
 
     // ONLY FOR PREVIEW

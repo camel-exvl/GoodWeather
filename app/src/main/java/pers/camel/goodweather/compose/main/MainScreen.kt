@@ -157,10 +157,11 @@ fun MainScreen(
                 )
             ) {
                 currentWeatherViewModel.setUpdateFailed()
+            } else {
+                animatedBackgroundColor.animateTo(backgroundColor, animationSpec = tween(500))
             }
-            animatedBackgroundColor.animateTo(backgroundColor, animationSpec = tween(500))
-            pullToRefreshState.endRefresh()
         }
+        pullToRefreshState.endRefresh()
     }
 
     Column(modifier = Modifier.drawBehind {
