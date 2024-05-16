@@ -160,8 +160,8 @@ fun MainScreen(
             } else {
                 animatedBackgroundColor.animateTo(backgroundColor, animationSpec = tween(500))
             }
+            pullToRefreshState.endRefresh()
         }
-        pullToRefreshState.endRefresh()
     }
 
     Column(modifier = Modifier.drawBehind {
